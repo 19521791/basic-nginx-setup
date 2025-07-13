@@ -1,0 +1,5 @@
+- name: Setup Nginx sites
+  hosts: staging
+  become: yes
+  roles:
+    - nginx

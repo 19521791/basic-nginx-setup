@@ -1,0 +1,12 @@
+server {
+  listen 80;
+  server_name {{ image_domain }};
+
+  location /local-assets/ {
+    alias /var/www/images-gallery/;
+    autoindex off;
+    allow {{ allowed_ip }};
+    allow 127.0.0.1;
+    deny all;
+  }
+}

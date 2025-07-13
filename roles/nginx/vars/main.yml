@@ -1,0 +1,7 @@
+image_domain: image_domain
+portfolio_domain: portfolio_domain
+api_domain: api_domain
+allowed_ip: allowed_ip
+cert_path: cert_path
+unix_socket_uri: unix socket or tcp endpoint
+nginx_root: nginx serve path

@@ -1,0 +1,51 @@
+- name: Debug
+  debug:
+    var: allowed_ip
+
+- name: Deploy image-gallery config
+  template:
+    src: image-gallery.conf.j2
+    dest: /etc/nginx/sites-available/image-gallery
+  notify: Reload nginx
+
+- name: Enable image-gallery
+  file:
+    src: /etc/nginx/sites-available/image-gallery
+    dest: /etc/nginx/sites-enabled/image-gallery
+    state: link
+
+- name: Deploy docker app config
+  template:
+    src: serve-docker.conf.j2
+    dest: /etc/nginx/sites-available/serve-docker
+  notify: Reload nginx
+
+- name: Enable to serve docker app
+  file: 
+    src: /etc/nginx/sites-available/serve-docker
+    dest: /etc/nginx/sites-enabled/serve-docker
+    state: link
+
+- name: Deploy portfolio config
+  template:
+    src: portfolio.conf.j2
+    dest: /etc/nginx/sites-available/portfolio
+  notify: Reload nginx
+
+- name: Enable portfolio
+  file:
+    src: /etc/nginx/sites-available/portfolio
+    dest: /etc/nginx/sites-enabled/portfolio
+    state: link
+
+- name: Deploy server config
+  template:
+    src: server.conf.j2
+    dest: /etc/nginx/sites-available/server
+  notify: Reload nginx
+
+- name: Enable server
+  file:
+    src: /etc/nginx/sites-available/server
+    dest: /etc/nginx/sites-enabled/server
+    state: link

@@ -1,0 +1,72 @@
+limit_req_zone $binary_remote_addr zone=one:10m rate=5r/s;
+
+server {
+  listen 80;
+
+  server_name {{ api_domain }};
+
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+
+  server_name {{ api_domain }};
+
+  ssl_certificate {{ cert_path }}/{{ api_domain }}/fullchain.pem;
+  ssl_certificate_key {{ cert_path }}/{{ api_domain }}/privkey.pem;
+
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_ciphers HIGH:!aNULL:!MD5;
+  ssl_session_cache shared:SSL:5m;
+  ssl_session_timeout 5m;
+  ssl_prefer_server_ciphers on;
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+  location / {
+    proxy_pass {{ unix_socket_uri }};
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_set_header HTTP_ACCESS_TOKEN $http_access_token;
+    limit_req zone=one burst=10 nodelay;
+  }
+
+  keepalive_timeout 60;
+
+  client_max_body_size 50M;
+
+  large_client_header_buffers 8 16k;
+
+  location ~ /\.(git|env) {
+    deny all;
+  }
+
+  location /cable {
+    proxy_pass {{ unix_socket_uri }}:/cable;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location /sidekiq {
+    proxy_pass {{ unix_socket_uri }}:/sidekiq;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  gzip on;
+  gzip_types text/plain text/xml text/css application/json application/javascript;
+
+  add_header X-Frame-Options DENY;
+  add_header X-XSS-Protection "1; mode=block";
+  add_header X-Content-Type-Options nosniff;
+}
